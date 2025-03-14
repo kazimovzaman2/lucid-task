@@ -1,0 +1,46 @@
+# Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.swp
+
+# Dependency directories
+.env/
+*.env
+
+# Coverage reports
+.coverage
+*.cover
+*.log
+
+# FastAPI related files
+*.sqlite3
+
+# Docker files
+docker-compose.override.yml
+
+# Pytest cache
+.pytest_cache/
+
+# Jupyter Notebook files
+.ipynb_checkpoints/
+
+# mypy
+.mypy_cache/
+
+# Pylint
+.pylint.d/
+
+# VSCode specific files
+.vscode/settings.json
