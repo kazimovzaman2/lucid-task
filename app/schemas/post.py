@@ -13,11 +13,3 @@ class PostCreate(PostBase):
 class PostResponse(PostBase):
     id: int
     user_id: int
-
-    class Config:
-        orm_mode = True
-
-
-class PostWithToken(BaseModel):
-    post: PostResponse
-    token: dict

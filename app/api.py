@@ -8,15 +8,26 @@ from app.models.user import User as UserModel
 from fastapi.security import HTTPBearer
 from app.services.posts import create_post, get_posts_by_user, delete_post_by_id
 
-app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
+async def lifespan(app: FastAPI):
+    print("Starting up...")
+    Base.metadata.create_all(bind=engine)
+
+    yield
+
+    print("Shutting down...")
+
+
+app = FastAPI(lifespan=lifespan)
 
 security = HTTPBearer()
 
 
 @app.post("/user/signup", response_model=UserWithToken)
 async def signup(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    Signup a new user, returning a JWT token for authentication
+    """
     if db.query(UserModel).filter(UserModel.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -36,6 +47,9 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/user/login", response_model=UserWithToken)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
+    """
+    Login an existing user, returning a JWT token for authentication
+    """
     db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
 
     if not db_user or db_user.password != user.password:
@@ -54,6 +68,9 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
 async def get_current_user(
     token: dict = Depends(JWTBearer()), db: Session = Depends(get_db)
 ):
+    """
+    Get the current logged-in user using the JWT token
+    """
     user_id = token.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -73,6 +90,9 @@ async def get_current_user(
 async def add_post(
     post: PostCreate, token: dict = Depends(JWTBearer()), db: Session = Depends(get_db)
 ):
+    """
+    Add a post to the current user's account
+    """
     user_id = token.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -84,6 +104,9 @@ async def add_post(
 
 @app.get("/posts", response_model=list[PostResponse])
 async def get_posts(token: dict = Depends(JWTBearer()), db: Session = Depends(get_db)):
+    """
+    Get all posts for the currently authenticated user
+    """
     user_id = token.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -100,6 +123,9 @@ async def get_posts(token: dict = Depends(JWTBearer()), db: Session = Depends(ge
 async def delete_post(
     post_id: int, token: dict = Depends(JWTBearer()), db: Session = Depends(get_db)
 ):
+    """
+    Delete a post from the current user's account
+    """
     user_id = token.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
