@@ -10,7 +10,8 @@ class UserCreate(UserBase):
     password: str
 
 
-class UserLogin(UserBase):
+class UserLogin(BaseModel):
+    email: EmailStr
     password: str
 
 

@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db, Base, engine
+from app.middleware import LimitRequestSizeMiddleware
 from app.schemas.post import PostCreate, PostResponse
 from app.schemas.user import UserCreate, UserLogin, UserResponse, UserWithToken
 from app.services.auth import JWTBearer, sign_jwt
 from app.models.user import User as UserModel
 from fastapi.security import HTTPBearer
-from app.services.posts import create_post, get_posts_by_user, delete_post_by_id
+from app.services.posts import create_post, get_all_posts, delete_post_by_id
 
 
 async def lifespan(app: FastAPI):
@@ -19,6 +20,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+app.add_middleware(LimitRequestSizeMiddleware, max_size=1 * 1024 * 1024)
 
 security = HTTPBearer()
 
@@ -103,15 +107,11 @@ async def add_post(
 
 
 @app.get("/posts", response_model=list[PostResponse])
-async def get_posts(token: dict = Depends(JWTBearer()), db: Session = Depends(get_db)):
+async def get_posts(db: Session = Depends(get_db)):
     """
-    Get all posts for the currently authenticated user
+    Get all posts from the database
     """
-    user_id = token.get("user_id")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    db_posts = get_posts_by_user(db, user_id)
+    db_posts = get_all_posts(db)
 
     if not db_posts:
         raise HTTPException(status_code=404, detail="No posts found")
