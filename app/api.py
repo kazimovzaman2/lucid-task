@@ -8,6 +8,7 @@ from app.services.auth import JWTBearer, sign_jwt
 from app.models.user import User as UserModel
 from fastapi.security import HTTPBearer
 from app.services.posts import create_post, get_all_posts, delete_post_by_id
+from app.services.cache import cache
 
 
 async def lifespan(app: FastAPI):
@@ -111,10 +112,18 @@ async def get_posts(db: Session = Depends(get_db)):
     """
     Get all posts from the database
     """
+
+    cached_posts = cache.get("posts")
+
+    if cached_posts:
+        return cached_posts
+
     db_posts = get_all_posts(db)
 
     if not db_posts:
         raise HTTPException(status_code=404, detail="No posts found")
+
+    cache["posts"] = db_posts
 
     return db_posts
 
